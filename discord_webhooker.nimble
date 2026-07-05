@@ -1,3 +1,5 @@
 
 requires "mummy"
 
+requires "dotenv"
+

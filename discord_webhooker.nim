@@ -1,18 +1,28 @@
 import std/[httpclient, json, strutils, nativesockets, sugar, sequtils]
 import mummy, mummy/routers
+#import dotenv
+
+#dotenv.load()
 
 const
-  DISCORD_WEBHOOK_URL: string = "https://discord.com/api/webhooks/1522647172112318678/BJLuj_ALmYAzl-_t6vOKoX5MyFHJaHO7fQ-nn84A2lkoz6SCCXSkO9uTTVjSwlAIpIgk"
-  PORT: uint16 = 50007
+  DISCORD_WEBHOOK_URL {.strdefine.} = ""
+  PORT {.intdefine.}: uint16 = 50007
+
+if DISCORD_WEBHOOK_URL == "":
+  echo "Please set -d:DISCORD_WEBHOOK_URL during `nim c`."
+  quit 1
 
 
-proc github_terra(request: Request) =
+proc github_terra(request: Request) {.gcsafe.} =
   var headers: httpheaders.HttpHeaders
   headers["Content-Type"] = "text/plain"
   let payload = request.body.parseJson
   echo request.headers["X-Github-Event"]
   echo payload
-  if payload["issue"]["user"]["type"].getStr == "Bot" or payload["issue"]["user"]["login"].getStr == "raboneko":
+  if payload["comment"]["user"]["type"].getStr == "Bot" or
+    payload["comment"]["user"]["login"].getStr == "raboneko" or
+    payload["issue"]["user"]["type"].getStr == "Bot" or
+    payload["issue"]["user"]["login"].getStr == "raboneko":
     request.respond(204, headers, "")
     return
   let c = newHttpClient()
