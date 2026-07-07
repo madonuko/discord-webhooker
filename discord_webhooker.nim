@@ -32,7 +32,7 @@ proc github_terra(request: Request) {.gcsafe.} =
     if body.len > 1000:
       body = body[0 .. 1000] & "…*[comment body truncated]*"
     let json = %*
-      { "content": "$1\n-# $2 | [#$3]($4): $5" % [body, payload["comment"]["user"]["login"].getStr, $payload["issue"]["number"].getInt, payload["comment"]["url"].getStr, payload["issue"]["title"].getStr] }
+      { "content": "$1\n-# $2 | [#$3]($4): $5" % [body, payload["comment"]["user"]["login"].getStr, $payload["issue"]["number"].getInt, payload["comment"]["html_url"].getStr, payload["issue"]["title"].getStr] }
     echo (c.post(DISCORD_WEBHOOK_URL, $json)).status
     request.respond(204, headers, "")
     return
