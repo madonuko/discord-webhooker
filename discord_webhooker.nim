@@ -39,6 +39,8 @@ proc github_terra(request: Request) {.gcsafe.} =
     echo (c.post(DISCORD_WEBHOOK_URL, $json)).status
     request.respond(204, headers, "")
     return
+  for (k, v) in request.headers.items:
+    c.headers[k] = v
   echo (c.post(DISCORD_WEBHOOK_URL & "/github", request.body)).status
   request.respond(204, headers, "")
   return
