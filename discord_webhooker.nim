@@ -4,6 +4,10 @@ import mummy, mummy/routers
 
 #dotenv.load()
 
+# https://docs.discord.com/developers/resources/webhook#execute-webhook
+# docs on webhook json
+
+
 const
   DISCORD_WEBHOOK_URL {.strdefine.} = ""
   PORT {.intdefine.}: uint16 = 50007
@@ -35,13 +39,20 @@ proc github_terra(request: Request) {.gcsafe.} =
     if body.len > 1000:
       body = body[0 .. 1000] & "…*[comment body truncated]*"
     let json = %*
-      { "content": "$1\n-# $2 | [#$3](<$4>): $5" % [body, payload["comment"]["user"]["login"].getStr, $payload["issue"]["number"].getInt, payload["comment"]["html_url"].getStr, payload["issue"]["title"].getStr] }
+      { "content": "$1\n-# $2 | [#$3](<$4>): $5" % [body, payload["comment"]["user"]["login"].getStr, $payload["issue"]["number"].getInt, payload["comment"]["html_url"].getStr, payload["issue"]["title"].getStr], "flags": 4 }
     echo (c.post(DISCORD_WEBHOOK_URL, $json)).status
     request.respond(204, headers, "")
     return
-  for (k, v) in request.headers.items:
-    c.headers[k] = v
-  echo (c.post(DISCORD_WEBHOOK_URL & "/github", request.body)).status
+  if request.headers["X-Github-Event"] == "issues":
+    var body = payload["issue"]["body"].getStr.strip
+    if body.len > 1800:
+      body = body[0 .. 1000] & "…*[comment body truncated]*"
+    let json = %*
+      { "content": "## :new: [#$1](<$2>): $3\n-# by $4\n>>> $5" % [$payload["issue"]["number"].getInt, payload["issue"]["html_url"].getStr, payload["issue"]["title"].getStr, payload["issue"]["user"]["login"].getStr, body], "flags": 4 }
+    echo (c.post(DISCORD_WEBHOOK_URL, $json)).status
+    request.respond(204, headers, "")
+    return
+  echo "ignoring above request"
   request.respond(204, headers, "")
   return
 
