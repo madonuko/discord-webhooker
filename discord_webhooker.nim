@@ -43,10 +43,10 @@ proc github_terra(request: Request) {.gcsafe.} =
     echo (c.post(DISCORD_WEBHOOK_URL, $json)).status
     request.respond(204, headers, "")
     return
-  if request.headers["X-Github-Event"] == "issues":
+  if request.headers["X-Github-Event"] == "issues" and payload["action"].getStr == "opened":
     var body = payload["issue"]["body"].getStr.strip
     if body.len > 1800:
-      body = body[0 .. 1000] & "…*[comment body truncated]*"
+      body = body[0 .. 1800] & "…*[comment body truncated]*"
     let json = %*
       { "content": "## :new: [#$1](<$2>): $3\n-# by $4\n>>> $5" % [$payload["issue"]["number"].getInt, payload["issue"]["html_url"].getStr, payload["issue"]["title"].getStr, payload["issue"]["user"]["login"].getStr, body], "flags": 4 }
     echo (c.post(DISCORD_WEBHOOK_URL, $json)).status
